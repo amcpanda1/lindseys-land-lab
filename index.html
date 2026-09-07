@@ -1,133 +1,77 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Lindseys Land Lab</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Lindseys Land Lab</div>
-      </div>
-    </div>
-    <script>
-      var canvas = document.querySelector("#unity-canvas");
-
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#132c25">
+  <meta name="description" content="A little world, entirely yours. Grow, gather, create and make yourself at home in Lindseys Land Lab.">
+  <title>Lindseys Land Lab</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#132c25;color:#f5efd9}
+    body{font-family:system-ui,sans-serif}#unity-canvas{width:100%;height:100%;display:block;outline:none;touch-action:none}
+    #loading{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 23% 95%,#516044 0,transparent 53%),radial-gradient(ellipse at 95% 0,#304d40,transparent 60%),#152e27;padding:32px;z-index:5}
+    .intro{max-width:650px;text-align:center}.eyebrow{font-size:12px;letter-spacing:.26em;color:#c2ceb2;text-transform:uppercase}.sprout{font-size:42px;color:#d5b56e;margin-bottom:30px;font-family:Georgia,serif}
+    h1{font-family:Georgia,serif;font-weight:normal;font-size:clamp(42px,7vw,80px);line-height:1.04;letter-spacing:-.045em;margin:25px 0}
+    .subtitle{font-family:Georgia,serif;font-style:italic;color:#d7d6bc;font-size:clamp(19px,3vw,26px)}
+    .track{width:260px;height:4px;margin:40px auto 16px;background:#ffffff16;border-radius:8px;overflow:hidden}#progress{height:100%;width:0;background:#d5b56e;transition:width .2s}
+    #status{font-size:13px;color:#c2ceb2;min-height:25px}.controls{margin:38px 0 0;font-size:12px;line-height:2;color:#b7c6ae}.controls b{font-weight:500;color:#e8e8ce}
+    button{border:1px solid #d5b56e66;background:#d5b56e;color:#152e27;border-radius:100px;padding:14px 30px;font:600 14px system-ui;cursor:pointer;margin-top:14px}button:focus-visible{outline:3px solid white;outline-offset:4px}
+    #error{display:none;max-width:520px;line-height:1.5;color:#f4d6bd;margin:24px auto}#version{position:absolute;bottom:max(20px,env(safe-area-inset-bottom));left:0;right:0;font-size:11px;letter-spacing:.14em;color:#8fa991}
+    @media(prefers-reduced-motion:reduce){#progress{transition:none}}
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="0" aria-label="Lindseys Land Lab farming game. Move with WASD or drag. Walk through crops to harvest. Escape closes a menu."></canvas>
+  <div id="loading">
+    <main class="intro">
+      <div class="sprout" aria-hidden="true">❧</div>
+      <div class="eyebrow">Grow a place of your own</div>
+      <h1>Lindseys<br>Land Lab</h1>
+      <p class="subtitle">A little world, entirely yours.</p>
+      <div class="track" role="progressbar" aria-label="Loading your farm" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress"></div></div>
+      <div id="status" role="status">Preparing the soil...</div>
+      <div id="error" role="alert"></div>
+      <p class="controls"><b>WASD or drag</b> to wander and harvest · <b>Scroll</b> to zoom<br>Gather. Fill the shop. Grow something that feels like you.</p>
+    </main>
+    <div id="version" class="eyebrow">THE SUNLIT UPDATE / 0.3.0</div>
+  </div>
+  <script>
+    const canvas=document.getElementById('unity-canvas');
+    const status=document.getElementById('status');
+    const loading=document.getElementById('loading');
+    // Explicit review mode exports the real rendered browser canvas, never a staged illustration.
+    const reviewCapture=new URLSearchParams(location.search).get('capture')==='1';
+    const buildSuffix='?v='+encodeURIComponent("0.3.0");
+    function fail(message){status.textContent='Your farm could not open.';const error=document.getElementById('error');error.style.display='block';error.textContent=message;const retry=document.createElement('button');retry.textContent='Try again';retry.onclick=()=>location.reload();error.append(document.createElement('br'),retry);}
+    const config={
+      dataUrl:'Build/LindseysLandLab.data.unityweb'+buildSuffix,frameworkUrl:'Build/LindseysLandLab.framework.js.unityweb'+buildSuffix,codeUrl:'Build/LindseysLandLab.wasm.unityweb'+buildSuffix,
+      streamingAssetsUrl:'StreamingAssets',companyName:"Lindseys Land Lab Studio",productName:"Lindseys Land Lab",productVersion:"0.3.0",
+      devicePixelRatio:Math.min(window.devicePixelRatio||1,1.5),
+      showBanner:(message,type)=>{if(type==='error')fail(message);else console.warn(message);}
+    };
+    if(reviewCapture)config.webglContextAttributes={preserveDrawingBuffer:true,powerPreference:2};
+    function enableReviewCapture(){
+      if(!reviewCapture)return;
+      const button=document.createElement('button');button.textContent='Capture for review';button.style.cssText='position:fixed;right:12px;bottom:12px;z-index:50';
+      button.onclick=()=>{
+        const photo=document.createElement('img');photo.alt='Browser verification capture';photo.src=canvas.toDataURL('image/png');photo.style.cssText='position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#132c25;z-index:100';
+        const close=document.createElement('button');close.textContent='Return to game';close.style.cssText='position:fixed;right:12px;top:12px;z-index:101';close.onclick=()=>{photo.remove();close.remove();};
+        document.body.append(photo,close);
+        if(location.hostname==='127.0.0.1'){
+          fetch(photo.src).then(result=>result.blob()).then(png=>fetch('/__review-capture',{method:'POST',headers:{'Content-Type':'image/png'},body:png}))
+            .then(result=>{if(!result.ok)throw new Error('Capture export failed');button.textContent='Browser capture saved';})
+            .catch(error=>{button.textContent='Capture export failed';console.error(error);});
         }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
-
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/LindseysLandLab.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/LindseysLandLab.data.unityweb",
-        frameworkUrl: buildUrl + "/LindseysLandLab.framework.js.unityweb",
-        codeUrl: buildUrl + "/LindseysLandLab.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "Lindseys Land Lab Studio",
-        productName: "Lindseys Land Lab",
-        productVersion: "0.2.0",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
       };
-
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
-      }
-
-      document.querySelector("#unity-loading-bar").style.display = "block";
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
-    </script>
-  </body>
+      document.body.appendChild(button);
+    }
+    const loader=document.createElement('script');loader.src='Build/LindseysLandLab.loader.js'+buildSuffix;
+    loader.onerror=()=>fail('The connection stopped while loading. Your saved farm is still on this device.');
+    loader.onload=()=>createUnityInstance(canvas,config,progress=>{
+      const amount=Math.round(progress*100);document.getElementById('progress').style.width=amount+'%';document.querySelector('.track').setAttribute('aria-valuenow',amount);
+      status.textContent=amount<90?'Opening your farm... '+amount+'%':'Letting the sunshine in...';
+    }).then(instance=>{loading.style.display='none';canvas.focus();enableReviewCapture();window.addEventListener('pointerdown',()=>{if(instance.Module&&instance.Module.WebAudio)instance.Module.WebAudio.audioContext?.resume();},{once:true});}).catch(error=>fail(String(error)));
+    document.body.appendChild(loader);
+  </script>
+</body>
 </html>
