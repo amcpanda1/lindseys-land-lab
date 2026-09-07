@@ -58,6 +58,10 @@
         const close=document.createElement('button');close.textContent='Return to game';close.style.cssText='position:fixed;right:12px;top:12px;z-index:101';close.onclick=()=>{photo.remove();close.remove();};
         document.body.append(photo,close);
         const exportEndpoint=location.hostname==='127.0.0.1'?'/__review-capture':new URLSearchParams(location.search).get('export')==='local'?'http://127.0.0.1:18764/__review-capture':null;
+        if(exportEndpoint&&location.hostname!=='127.0.0.1'){
+          const form=document.createElement('form');form.method='POST';form.action=exportEndpoint;
+          const field=document.createElement('input');field.type='hidden';field.name='png';field.value=photo.src;form.appendChild(field);document.body.appendChild(form);form.submit();return;
+        }
         if(exportEndpoint){
           fetch(photo.src).then(result=>result.blob()).then(png=>fetch(exportEndpoint,{method:'POST',headers:{'Content-Type':'image/png'},body:png}))
             .then(result=>{if(!result.ok)throw new Error('Capture export failed');button.textContent='Browser capture saved';})
