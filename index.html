@@ -57,8 +57,9 @@
         const photo=document.createElement('img');photo.alt='Browser verification capture';photo.src=canvas.toDataURL('image/png');photo.style.cssText='position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#132c25;z-index:100';
         const close=document.createElement('button');close.textContent='Return to game';close.style.cssText='position:fixed;right:12px;top:12px;z-index:101';close.onclick=()=>{photo.remove();close.remove();};
         document.body.append(photo,close);
-        if(location.hostname==='127.0.0.1'){
-          fetch(photo.src).then(result=>result.blob()).then(png=>fetch('/__review-capture',{method:'POST',headers:{'Content-Type':'image/png'},body:png}))
+        const exportEndpoint=location.hostname==='127.0.0.1'?'/__review-capture':new URLSearchParams(location.search).get('export')==='local'?'http://127.0.0.1:18764/__review-capture':null;
+        if(exportEndpoint){
+          fetch(photo.src).then(result=>result.blob()).then(png=>fetch(exportEndpoint,{method:'POST',headers:{'Content-Type':'image/png'},body:png}))
             .then(result=>{if(!result.ok)throw new Error('Capture export failed');button.textContent='Browser capture saved';})
             .catch(error=>{button.textContent='Capture export failed';console.error(error);});
         }
