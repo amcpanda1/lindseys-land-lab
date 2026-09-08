@@ -33,7 +33,7 @@
       <div id="error" role="alert"></div>
       <p class="controls"><b>WASD or drag</b> to wander and harvest · <b>Scroll</b> to zoom<br>Gather. Fill the shop. Grow something that feels like you.</p>
     </main>
-    <div id="version" class="eyebrow">THE SUNLIT UPDATE / 0.3.0</div>
+    <div id="version" class="eyebrow">THE WORKING FARM / 0.5.0</div>
   </div>
   <script>
     const canvas=document.getElementById('unity-canvas');
@@ -41,11 +41,11 @@
     const loading=document.getElementById('loading');
     // Explicit review mode exports the real rendered browser canvas, never a staged illustration.
     const reviewCapture=new URLSearchParams(location.search).get('capture')==='1';
-    const buildSuffix='?v='+encodeURIComponent("0.3.0");
+    const buildSuffix='?v='+encodeURIComponent("0.5.0");
     function fail(message){status.textContent='Your farm could not open.';const error=document.getElementById('error');error.style.display='block';error.textContent=message;const retry=document.createElement('button');retry.textContent='Try again';retry.onclick=()=>location.reload();error.append(document.createElement('br'),retry);}
     const config={
       dataUrl:'Build/LindseysLandLab.data.unityweb'+buildSuffix,frameworkUrl:'Build/LindseysLandLab.framework.js.unityweb'+buildSuffix,codeUrl:'Build/LindseysLandLab.wasm.unityweb'+buildSuffix,
-      streamingAssetsUrl:'StreamingAssets',companyName:"Lindseys Land Lab Studio",productName:"Lindseys Land Lab",productVersion:"0.3.0",
+      streamingAssetsUrl:'StreamingAssets',companyName:"Lindseys Land Lab Studio",productName:"Lindseys Land Lab",productVersion:"0.5.0",
       devicePixelRatio:Math.min(window.devicePixelRatio||1,1.5),
       showBanner:(message,type)=>{if(type==='error')fail(message);else console.warn(message);}
     };
